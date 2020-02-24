@@ -36,7 +36,7 @@ public class Robot extends TimedRobot {
     public void teleopPeriodic() {
         reseter();
 
-        //setAngle(); does this change anything for our build? 
+        //setAngle(); This should not change anything for our build since it we are not yet running with a gyro. 02/23/20
         
         drive();
 
@@ -45,7 +45,7 @@ public class Robot extends TimedRobot {
 
     public void drive() {
         if (controller.getTriggerAxis(right) > 0.5) {
-            base.angleLockedDrive(controller, left);
+            base.arcadeTuning(controller, left);
         /*
         } else if (controller.getTriggerAxis(left) > 0.5) {
             base.ballFollowDrive();
@@ -64,22 +64,7 @@ public class Robot extends TimedRobot {
         color.dashboard();
     }
 
-    public void setAngle() {
-        if (controller.getPOV() == 0) {
-            base.setAngle(0);
-        } else if (controller.getPOV() == 90) {
-            base.setAngle(90);
-        } else if (controller.getPOV() == 180) {
-            base.setAngle(180);
-        } else if (controller.getPOV() == 270) {
-            base.setAngle(270);
-        }
+    public void reseter() { 
     }
 
-    public void reseter() {
-        if (controller.getAButtonReleased()) {
-            //base.reset(); //Could cause locking, we don't have gyro, need to look at reset
-            //System.out.print("Base Reset.");
-        }
-    }
 }
