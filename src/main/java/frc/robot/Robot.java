@@ -4,21 +4,25 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
-
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import frc.robot.sensors.ColorSensor;
 import frc.robot.subsystems.DriveBase;
 
+
 public class Robot extends TimedRobot {
+    
+    public static final XboxController.Hand kLeft = XboxController.Hand.kLeft;
+    public static final XboxController.Hand kRight = XboxController.Hand.kRight;
 
-    public static XboxController controller = new XboxController(0);
-    public static final GenericHID.Hand left = GenericHID.Hand.kLeft;
-    public static final GenericHID.Hand right = GenericHID.Hand.kRight;
+    public static XboxController controller = new XboxController(0);  //Drive controller is on zero.
 
-    public static DriveBase base = new DriveBase(1, 2, 3, 4);
+    public static DriveBase base = new DriveBase(1, 2, 3, 5);
+    // During the testing of the Motor Controllers, "4" became "5", which should not cause any problems.
 
+    //public class kLeft = DriveBase(1,2);
     //public static DistanceSensor dist = new DistanceSensor(Rev2mDistanceSensor.Port.kOnboard);
 
-    public static ColorSensor color = new ColorSensor(I2C.Port.kMXP);
+    //public static ColorSensor color = new ColorSensor(I2C.Port.kMXP);
 
     @Override
     public void robotInit() {
@@ -44,16 +48,19 @@ public class Robot extends TimedRobot {
     }
 
     public void drive() {
-        if (controller.getTriggerAxis(right) > 0.5) {
-            base.arcadeTuning(controller, left);
+        if (controller.getTriggerAxis(Hand.kRight) > 0.5) {
+            //base.arcadeTuning(controller, left);
+            base.arcadeTuning(controller, Hand.kLeft);  
+            // Should include both left and right.
         /*
         } else if (controller.getTriggerAxis(left) > 0.5) {
             base.ballFollowDrive();
         */
-        } else if (controller.getBumper(left)) {
+        } else if (controller.getBumper(Hand.kLeft)) {
             base.distanceDrive();
         } else {
-            base.arcadeDrive(controller, left, right);
+            base.arcadeDrive(controller, Hand.kLeft, Hand.kRight);
+            // Should include both left and right.
         }
 
     }
@@ -61,7 +68,7 @@ public class Robot extends TimedRobot {
     public void dashboard() {
         base.dashboard();
         //dist.dashboard();
-        color.dashboard();
+        //color.dashboard();
     }
 
     public void reseter() { 
