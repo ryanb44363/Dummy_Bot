@@ -4,13 +4,20 @@ import com.kauailabs.navx.frc.AHRS;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
-
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
+import frc.robot.sensors.ColorSensor;
+import frc.robot.subsystems.DriveBase;
+
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+
+import edu.wpi.first.wpilibj.command.PIDSubsystem;
 
 //import frc.robot.sensors.Limelight;
 import frc.robot.sensors.Pipeline;
@@ -18,52 +25,39 @@ import frc.robot.sensors.Pipeline;
 public class DriveBase {
     //--------------------------------\\
     // DriveTrain Section:
-    private CANSparkMax leftfrontmotor;
-    private CANSparkMax leftrearmotor;
-    private CANSparkMax rightfrontmotor;    
-    private CANSparkMax rightrearmotor;
+    public CANSparkMax leftfrontmotor;  // Should be motor controller #1.
+    public CANSparkMax leftrearmotor;   // Should be motor controller #2.
+    public CANSparkMax rightfrontmotor; // Should be motor controller #3.   
+    public CANSparkMax rightrearmotor;  // Should be motor controller #4.
     //--------------------------------\\
-    // Arm Section:
-    private WPI_TalonSRX Arm;        // Will Likely Undergo Change.
-    private WPI_TalonSRX Mouth;      // Will Likely Undergo Change.
-    //--------------------------------\\
-    // Climb Section:
-    private WPI_TalonSRX Hook;       // Will Likely Undergo Change.
-    private WPI_TalonSRX Climb_Motor1;// Will Likely Undergo Change.
-    private WPI_TalonSRX Climb_Motor2;// Will Likely Undergo Change.
-    //--------------------------------\\
-    //Color Wheel Section:
-    private WPI_TalonSRX Hand;        // Will Likely Undergo Change.
-    private WPI_TalonSRX Spinner;     // Will Likely Undergo Change.
-    //--------------------------------\\
-    //private AHRS gyro = new AHRS();
+    //public AHRS gyro = new AHRS();
     //--------------------------------\\
     // Constants:
-    private final double pTurn = 0.005;
-    private final double iTurn = 0.0;
-    private final double dTurn = 0.0;
+    public final double pTurn = 0.005;
+    public final double iTurn = 0.0;
+    public final double dTurn = 0.0;
 
-    private final double pDrive = 0.016;
-    private final double iDrive = 0.0;
-    private final double dDrive = 0.0;
+    public final double pDrive = 0.016;
+    public final double iDrive = 0.0;
+    public final double dDrive = 0.0;
     //--------------------------------\\
   
     // Controllers:
-    private PIDController turnController = new PIDController(pTurn, iTurn, dTurn);
-    private PIDController driveController = new PIDController(pDrive, iDrive, dDrive);
-    private PIDController ballTurnController = new PIDController(pTurn, iTurn, dTurn);
-    private PIDController ballDriveController = new PIDController(pDrive, iDrive, dDrive);
+    public PIDController turnController = new PIDController(pTurn, iTurn, dTurn);
+    public PIDController driveController = new PIDController(pDrive, iDrive, dDrive);
+    public PIDController ballTurnController = new PIDController(pTurn, iTurn, dTurn);
+    public PIDController ballDriveController = new PIDController(pDrive, iDrive, dDrive);
 
-    public static final GenericHID.Hand left = GenericHID.Hand.kLeft;
-    public static final GenericHID.Hand right = GenericHID.Hand.kRight;
+    public static final XboxController.Hand kLeft = XboxController.Hand.kLeft;
+    public static final XboxController.Hand kRight = XboxController.Hand.kRight;
 
-    private XboxController controller = new XboxController(0);
-    private XboxController controller1 = new XboxController(1); //Really Controller #2 But Base Zero so it is called "1".
-    
+    public XboxController controller = new XboxController(0);
+    //public XboxController controller1 = new XboxController(1); //Really Controller #2 But Base Zero so it is called "1".
+ 
     // Misc:
-    private double tx_prev = 0;
+    public double tx_prev = 0;
 
-    //private Limelight camera = new Limelight(Pipeline.BALL);
+    //public Limelight camera = new Limelight(Pipeline.BALL);
 
  
 
@@ -120,8 +114,8 @@ public class DriveBase {
 
         tx_prev = 0;
     }
-
-    public void arcadeDrive(XboxController controller, GenericHID.Hand left, GenericHID.Hand right) {
+                        // Should not need to define left and right for one controller.
+    public void arcadeDrive(XboxController controller, XboxController.Hand left, XboxController.Hand right) {
         double throttle = 0;
         double turn = 0;
         //-------------------------------------\\
@@ -134,147 +128,8 @@ public class DriveBase {
         rightrearmotor.set(turn + throttle);
         //--------------------------------------\\
     }
-    
-    public void Shooter(XboxController controller1, GenericHID.Hand right) {
-        // Controls: Xbox Controller (2)
-        // Safety - Hold Right Trigger to Operate Further, thereby taking
-        // safety off.
-        // Intake
-
-        // Values Defined:
-        double intakeVelocity = 0.0;  // Value to be set after testing.
-        double extakeVelocity = 0.0; // Value to be set after testing.
-        double liftVelocity = 0.0;  // Value to be set after testing.
-        double lowerVelocity = 0.0;// Value to be set after testing.
-
-        // Operator Must Push Trigger, then Right Axis to Control Intake.
-            // Failsafe was set since Operator is a Rookie.
-        //-------------------------------------------\\
-
-        // For controlling the Intake: 
-        if (controller1.getTriggerAxis(right) > 0.5) {
-            if (controller1.getAButtonPressed()){
-                Mouth.set(intakeVelocity);
-            } 
-            // FailSafe (I-1):
-            else { Mouth.set(0.0); }
-        }
-        // Failsafe (I-2):
-        if (controller1.getAButtonReleased()) {
-            Mouth.set(0.0);
-            }
-        // Failsafe (I-3):
-        if (controller1.getTriggerAxis(right) < 0.5) {
-            Mouth.set(0.0);
-            }
-
-        //-------------------------------------------\\
-        // For controlling the Extake:
-        if (controller1.getTriggerAxis(right) > 0.5) {
-            if (controller1.getBButtonPressed()) {
-                Mouth.set(extakeVelocity);
-            }
-            // FailSafe (E-1):
-            else { Mouth.set(0.0); }
-        }
-        // Failsafe (E-2):
-        if (controller1.getAButtonReleased()) {
-            Mouth.set(0.0);
-            }
-        // Failsafe (E-3):
-        if (controller1.getTriggerAxis(right) < 0.5) {
-            Mouth.set(0.0);
-            }
-    
-        //-------------------------------------------\\
-
-        // For controlling the Arm (angle):
-
-        //-------------------------------------------\\
-            // Raise Up:
-        if (controller1.getTriggerAxis(right) > 0.5) {
-            if (controller1.getYButtonPressed()) {
-                Arm.set(liftVelocity);
-            } 
-            // Failsafe (RU-1):
-            else { Arm.set(0.0); }
-        }
-        // Failsafe (RU-2):
-        if (controller1.getYButtonReleased()) {
-            Arm.set(0.0);
-            }
-        // Failsafe (RU-3):
-        if (controller1.getTriggerAxis(right) < 0.5) {
-            Arm.set(0.0);
-            }
-        //-------------------------------------------\\
-            // Lower Down:
-        if (controller1.getTriggerAxis(right) > 0.5) {
-            if (controller1.getXButtonPressed()) {
-                Arm.set(lowerVelocity);
-            }
-            else
-            // Failsafe (LD-1):
-            { Arm.set(0.0); }
-        }
-        // Failsafe (LD-2):
-        if (controller1.getYButtonReleased()) {
-            Arm.set(0.0);
-            }
-        // Failsafe (LD-3):
-        if (controller1.getTriggerAxis(right) < 0.5) {
-            Arm.set(0.0);
-            }
-        }
-        //-------------------------------------------\\
-    
-    public void Climber(XboxController controller1, GenericHID.Hand left) {
-        double upperVelocity = 0.0; // Value to be set after testing.
-        double lowerVelocity = 0.0; // Value to be set after testing.
-        double climbUpVelocity = 0.25; // Value to be set after testing.
-        double climbDownVelocity = 0.05; // Value to be set after testing.
-
-        // Hoist Hook:
-        if (controller1.getTriggerAxis(right) > 0.5) {
-            if (controller1.getY(left) > 0.05) {
-                Hook.set(upperVelocity);
-            }
-            if (controller1.getY(left) < 0.05) {
-                Hook.set(lowerVelocity);
-            }
-        }
-        // Failsafe (H-1):
-        else
-            { Hook.set(0.0); }
-        // Failsafe (H-2):
-        if (controller1.getTriggerAxis(right) < 0.05 || controller1.getTriggerAxis(right) > 0.05) {
-            Hook.set(0.0);
-            }
-
-        // Climb Up:
-        if (controller1.getTriggerAxis(right) > 0.05) {
-            if (controller.getY(right) > 0.05) {
-                Climb_Motor1.set(climbUpVelocity);  // "throttle = controller.getY(left);"  Keep this in mind!!!
-                Climb_Motor2.set(climbUpVelocity);
-            }
-            if (controller.getY(right) < -0.05) {
-                Climb_Motor1.set(climbDownVelocity);
-                Climb_Motor2.set(climbDownVelocity);    
-            } 
-        // Failsafe (1):
-        else {
-            Climb_Motor1.set(0.0);
-            Climb_Motor2.set(0.0);
-            }
-        }
-        // Failsafe (2):
-        if (controller1.getTriggerAxis(right) < 0.05 || controller1.getTriggerAxis(right) > -0.05) {
-            Climb_Motor1.set(0.0);
-            Climb_Motor2.set(0.0);
-        }
-    }
-
-    public void arcadeTuning(XboxController controller, GenericHID.Hand left) {
+             
+    public void arcadeTuning(XboxController controller, Hand left) {
         //double turn = turnController.calculate(getAngle());
         double throttle = 0;
         double turn = 0;
@@ -283,8 +138,8 @@ public class DriveBase {
         //  Plus or minus 0.05 Joystick Axis trigger causes automatic rotation. 02/23/20
 
         // Arcade Drive (1):
-        if (controller.getY(left) > 0.05 || controller.getY(left) < -0.05) {
-            throttle = controller.getY(left);
+        if (controller.getY(Hand.kLeft) > 0.05 || controller.getY(Hand.kLeft) < -0.05) {
+            throttle = controller.getY(Hand.kLeft);
             throttle = -throttle;  //to southpaw or not.  currently not.
         
         // Failsafe (1):
@@ -294,8 +149,8 @@ public class DriveBase {
                 }
 
         // Arcade Drive (2):
-        if (controller.getX(left) > 0.05 || controller.getX(left) < -0.05) {
-            turn = controller.getX(left);
+        if (controller.getX(Hand.kLeft) > 0.05 || controller.getX(Hand.kLeft) < -0.05) {
+            turn = controller.getX(Hand.kLeft);
         
         // Failsafe (2):
         } else { 
@@ -304,7 +159,7 @@ public class DriveBase {
                 }
 
         // Failsafe (General):
-        if (controller.getY(left) < 0.05 || controller.getY(left) > -0.05) {
+        if (controller.getY(Hand.kLeft) < 0.05 || controller.getY(Hand.kLeft) > -0.05) {
             throttle = 0;
             }
         }
@@ -342,7 +197,6 @@ public class DriveBase {
     }
     //--------------------------------------------------\\
 
-
     //--------------------------------------------------\\
     // intakeVelocity (dx/dt) Section: 
     public double getLeftVelocity() {
@@ -354,13 +208,11 @@ public class DriveBase {
     }
     //--------------------------------------------------\\
 
-
     /*
     public double getAngle() {
         return gyro.getAngle();
     }
     */
-
 
     //------------------------------------------\\
     // Targeting Section:
@@ -377,8 +229,6 @@ public class DriveBase {
         return ballDriveController.atSetpoint();
     }
     //------------------------------------------\\
-
-
 
     public void dashboard() {
         // Extra  Data Display:
