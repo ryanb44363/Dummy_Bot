@@ -1,3 +1,4 @@
+/*
 package frc.robot.sensors;
 
 import com.revrobotics.ColorSensorV3;
@@ -24,3 +25,4 @@ public class ColorSensor {
         SmartDashboard.putNumber("Blue", getColor()[2]);
     }
 }
+*/
